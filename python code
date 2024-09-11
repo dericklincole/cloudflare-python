@@ -1,0 +1,38 @@
+# pip install requests
+import requests
+import time
+
+api_key = "YOUR_API_KEY"  # Enter your CapSolver API key here
+site_key = "0x4XXXXXXXXXXXXXXXXX"  # Enter the site key of the target website
+site_url = "https://www.yourwebsite.com"  # Enter the target website URL
+
+def capsolver():
+    payload = {
+        "clientKey": api_key,
+        "task": {
+            "type": 'AntiTurnstileTaskProxyLess',
+            "websiteKey": site_key,
+            "websiteURL": site_url,
+        }
+    }
+    res = requests.post("https://api.capsolver.com/createTask", json=payload)
+    resp = res.json()
+    task_id = resp.get("taskId")
+    if not task_id:
+        print("Failed to create task:", res.text)
+        return
+    print(f"Got taskId: {task_id}, getting result...")
+
+    while True:
+        time.sleep(1)
+        payload = {"clientKey": api_key, "taskId": task_id}
+        res = requests.post("https://api.capsolver.com/getTaskResult", json=payload)
+        resp = res.json()
+        if resp.get("status") == "ready":
+            return resp.get("solution", {}).get('token')
+        if resp.get("status") == "failed":
+            print("Solve failed:", res.text)
+            return
+
+token = capsolver()
+print(token)
